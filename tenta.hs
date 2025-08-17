@@ -1,8 +1,10 @@
 import Data.List
-import Data.Char (chr, ord, isAlpha, isAlphaNum, isDigit, digitToInt,)
+import Data.Char
 import Data.Text.Internal.Fusion.Size (larger)
 import Distribution.Compat.Lens (_1)
 import Data.Time
+import Distribution.Simple.Utils (xargs)
+
 
 --------------------------- Kapitel 1 -------------------------------------------------------------------------------------------------------------------------
 --Övningar--
@@ -80,14 +82,14 @@ differentFunction = exampleFunction * 2
 --         xs = [1,2,3,4,5]
 
 -- Korrekt kod --
-n = a `div` (length xs)
+n = a `div` length xs
     where
         a = 10
         xs = [1,2,3,4,5]
 
 -- 4: Definera last ------------------------
 
-last1 xs = drop ( (length xs) - 1) xs
+last1 xs = drop ( length xs - 1) xs
 
 last2 xs = xs !! (length xs - 1)
 
@@ -142,6 +144,276 @@ add (x,y) = x + y
 zeroto :: Int -> [Int]
 zeroto n = [0..n]
 
+-- zeroto med odd/even villkor -------------
 ztodd :: Int -> [Int]
-ztodd n = [x|x <- [0..n], not (even x)]
+ztodd n = [x | x <- [0..n], odd x]
 
+zteven :: Int -> [Int]
+zteven n = [x | x <- [0..n], even x]
+
+-- Egen övning -----------------------------
+evenodd :: [Int] -> [[Int]]
+evenodd xs = [[x | x <- xs, even x], [y | y <- xs, odd y]]
+
+-- Polymorphic typer -----------------------------------------------------
+
+-- length :: [a] -> Int
+-- Låter listan vars length ska beräknas bestå av vilken typ av element som helst
+
+-- Andra exempel --
+
+-- fst  :: (a,b) -> a
+-- head :: [a] -> a
+-- take :: Int -> [a] -> [a]
+-- zip  :: [a] -> [b] -> [(a,b)]
+
+-- Overloaded typer ------------------------------------------------------
+
+-- (+)      :: Num a => a -> a -> a
+-- (*)      :: Num a => a -> a -> a
+-- negate   :: Num a => a -> a
+-- abs      :: Num a => a -> a
+
+-- Övningar --------------------------------------------------------------
+
+-- 2: Definera funktioner med olika typer
+
+-- 2 a)
+
+--------------------------- Kapitel 4 --------------------------------------------------------------------------------------------------------------------------
+
+-- Conditional expressions -----------------------------------------------
+
+abs1 :: Int -> Int
+abs1 n = if n >= 0 then n else -n
+
+-- Nested --
+
+--signum1 :: Int -> Int
+--signum1 n = if n < 0 then -1 else
+--            if n == 0 then 0 else 1
+
+-- Guards ----------------------------------------------------------------
+
+-- Guards kan göra conditions lättare att skriva och läsa
+-- Här är de tidigare funktionerna uttryckta med guards
+
+abs2 :: Int -> Int
+abs2 n  |n >= 0     = n
+        |otherwise  = -n
+
+signum2 :: Int -> Int
+signum2 n   | n < 0     = -1
+            | n == 0    = 0
+            | otherwise = 1
+
+-- Pattern matching ------------------------------------------------------
+
+not1 :: Bool -> Bool
+not1 False  = True
+not1 True   = False
+
+and1 :: Bool -> Bool -> Bool
+and1 True True  = True
+and1 _ _        = False
+
+-- Mer optimerad pattern matching --
+
+and2:: Bool -> Bool -> Bool
+and2 True b     = b
+and2 False _    = False
+
+-- Tuple patterns --------------------------
+
+fst1 :: (a,b) -> a
+fst1 (x,_)  = x
+
+snd1 :: (a,b) -> b
+snd1 (_,y)  = y
+
+-- List patterns ---------------------------
+
+test :: [Char] -> Bool
+test ['a', _, _]    = True
+test _              = False
+
+-- : (constructor operator) bygger ihop listor 
+-- [1,2,3] = 1:(2:(3:[]))
+-- Operatorn associerar till höger, så onödiga paranteser behöver inte skrivas
+-- 1:(2:(3:[])) = 1:2:3:[] till exempel
+
+-- Vi kan optimera test lite med cons 
+
+test1 :: [Char] -> Bool
+test1 ('a':_)   = True
+test1 _         = False
+
+-- Library funktionerna head och tail --
+
+head1 :: [a] -> a
+head1 (x:_)  = x
+
+tail1 :: [a] -> [a]
+tail1 (_:xs)    = xs
+
+-- Övningar --------------------------------------------------------------
+
+-- 1: Definera halve :: [a] -> ([a], [a])
+
+halve :: [a] -> ([a], [a])
+halve [] = ([], [])
+halve xs = (take (div (length xs) 2) xs, drop (div (length xs) 2) xs)
+
+-- 2: Definera third :: [a] -> a 
+-- som returnerar tredje elementet 
+-- i en lista med minst 3 element
+
+-- a) med head & tail
+
+thirdA :: [a] -> a
+thirdA xs = head (tail (tail xs))
+
+-- b) med !!
+thirdB :: [a] -> a
+thirdB xs = xs !! 2
+
+-- c) med pattern matching
+thirdC :: [a] -> a
+thirdC [_,_,x] = x
+
+
+-- 3: Definera safetail :: [a] -> [a] 
+
+-- a) med ett conditional uttryck
+
+safetailA :: [a] -> [a]
+safetailA xs = if null xs then [] else tail xs
+
+-- b) med guards
+safetailB :: [a] -> [a]
+safetailB xs    | null xs       = []
+                | otherwise     = tail xs
+
+-- c) med pattern matching
+safetailC :: [a] -> [a]
+safetailC []    = []
+safetailC xs    = tail xs
+
+-- 4: Visa hur || kan defineras på ett liknande sätt som && med pattern matching
+
+or :: Bool -> Bool -> Bool
+or True False   = True
+or False True   = True
+or _ _          = False
+
+-- 8: Luhn
+luhnDouble :: Int -> Int 
+luhnDouble n | n <= 4       = n * 2
+             | otherwise    = (n * 2) - 9
+
+luhn :: Int -> Int -> Int -> Int -> Bool
+luhn a b c d | mod (d + luhnDouble c + b + luhnDouble a) 10 == 0    = True
+             | otherwise                                            = False
+
+--------------------------- Kapitel 5 --------------------------------------------------------------------------------------------------------------------------
+-- List comprehension --
+-- [x | x <- [1..n], condition]
+
+-- Fler conditions: --
+-- [ (x,y,z) | x <- [1..n], y [1..n], z <- [1..n]]
+
+-- Ordered pairs : --
+-- [(x,y) | x <- [1..n], y <- [x..n]]
+
+concat1 :: [[a]] -> [a]
+concat1 xss = [x | xs <- xss, x <- xs]
+
+-- zip & andra mer avancerade  --
+
+pairs :: [a] -> [(a,a)]
+pairs xs = zip xs (tail xs)
+
+sorted :: Ord a => [a] -> Bool
+sorted xs = and [x <= y | (x,y) <- pairs xs]
+
+positions :: Eq a => a -> [a] -> [Int]
+positions x xs = [i | (x', i) <- zip xs [0..], x == x']
+
+-- String comprehension --------------------------------------------------
+
+lowers :: String -> Int
+lowers str = length [x | x <- str, x >= 'a' && x <= 'z']
+
+count :: Char -> String -> Int
+count x xs = length [y | y <- xs, y == x]
+
+char2int :: Char -> Int
+char2int c = ord c - ord 'a'
+
+int2char :: Int -> Char
+int2char n = chr (ord 'a' + n)
+
+shift :: Int -> Char -> Char
+shift n c | isLower c = int2char ((char2int c + n) `mod` 26)
+          | otherwise = c 
+
+encode :: Int -> String -> String
+encode n str = [shift n x | x <- str]
+
+
+
+-- Övningar --------------------------------------------------------------
+
+pyths :: Int -> [(Int, Int, Int)]
+pyths n = [ (a, b, c) | a <- [1..n], b <- [a..n], c <- [b..n], (a * a + b * b) == c * c, a + b + c <= n]
+
+
+factors :: Int -> [Int]
+factors n = [x | x <- [1..n], mod n x == 0]
+
+
+isPerfect :: Int -> Bool
+isPerfect n | sum (factors n) == n + n              = True
+            | otherwise                             = False
+
+perfects :: Int -> [Int]
+perfects n = [x | x <- [1..n], isPerfect x]
+
+isPrime :: Int -> Bool
+isPrime n | factors n == [1,n]  = True
+          | otherwise           = False
+
+primesTo :: Int -> [Int]
+primesTo n = [x | x <- [2..n], isPrime x]
+
+sumTo :: [Int] -> Int -> [(Int, Int)]
+sumTo xs n = [(x, y) | x <- xs, y <- xs, x <= y && x + y == n]
+
+
+scalar :: [Int] -> [Int] -> Int
+scalar [] []            = 0
+scalar (x:xs) (y:ys)    = x * y + scalar xs ys
+
+scalar2 :: [Int] -> [Int] -> Int
+scalar2 xs ys = sum [x * y | (x,y) <- zip xs ys]
+
+--------------------------- Kapitel 6: Recursion ---------------------------------------------------------------------------------------------------------------
+
+-- Basics --
+-- fac :: Int -> Int
+-- fac n = product [1..n]
+
+fac1 :: Int -> Int
+fac1 0  = 1
+fac1 n = n * fac1 (n-1)
+
+-- Recursions on lists --
+
+
+
+
+
+
+
+
+--------------------------- Kapitel 5 --------------------------------------------------------------------------------------------------------------------------
