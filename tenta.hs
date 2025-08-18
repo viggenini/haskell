@@ -405,10 +405,137 @@ scalar2 xs ys = sum [x * y | (x,y) <- zip xs ys]
 
 fac1 :: Int -> Int
 fac1 0  = 1
-fac1 n = n * fac1 (n-1)
+fac1 n | n >= 0     = n * fac1 (n-1)
+       | otherwise  = 0
+
 
 -- Recursions on lists --
 
+product1 :: Num a => [a] -> a
+product1 []     = 1
+product1 (n:ns) = n * product1 ns
+
+length1 :: [a] -> Int
+length1 []      = 0
+length1 (_:xs)  = 1 + length1 xs
+
+reverse1 :: [a] -> [a]
+reverse1 []     = []
+reverse1 (x:xs) = reverse xs ++ [x]
+
+insertDeez :: Ord a => a -> [a] -> [a]
+insertDeez x []     = [x]
+insertDeez x (y:ys) | x <= y    = x : y : ys
+                    | otherwise = y : insertDeez x ys
+
+isort :: Ord a => [a] -> [a]
+isort []        = []
+isort (x:xs)    = insertDeez x (isort xs)
+
+-- Multiple arguments -- 
+
+zipDeez :: [a] -> [b] -> [(a,b)]
+zipDeez _ []    = []
+zipDeez [] _    = []
+zipDeez (x:xs) (y:ys) = (x,y) : zip xs ys
+
+dropDeez :: Int -> [a] -> [a]
+dropDeez 0 xs       = xs
+dropDeez _ []       = []
+dropDeez n (_:xs)   = drop (n-1) xs
+
+-- Multiple recursion --
+
+fib :: Int -> Int
+fib 0       = 0
+fib 1       = 1
+fib n       = fib (n - 2) + fib (n - 1)
+
+------------------ Steg för steg : Recursion -----------------------
+
+-- Vi använder prod för att illustrera stegvis hur man kan bygga en rekursiv funktion
+
+
+-- 1: Define the type --
+
+-- product :: [Int] -> Int
+
+
+-- 2: Enumerate the cases --
+
+-- product []       =
+-- product (n:ns)   =
+
+-- 3: Define the simple cases --
+
+-- product []       = 1
+-- product (n:ns)   =
+
+-- 4: Define the other cases --
+
+-- product []       = 1
+-- product (n:ns)   = n * product ns
+
+-- 5: Generalize and simplify --
+
+-- product :: Num a => [a] -> a
+-- product = foldr (*) 1
+
+
+-- Övningar --------------------------------------------------------
+
+-- 1: Ändra definitionen av fac1 så att negativa värden inte godtas
+-- Se ändrad defininition ovan
+
+-- 2: Definera sumdown :: Int -> Int som returnerar summan från n ner till 0
+
+sumdown :: Int -> Int
+sumdown 0   = 0
+sumdown n   = n + sumdown (n-1)
+
+-- 3: Definera euclid :: Int -> Int -> Int som ger gcd
+
+euclid :: Int -> Int -> Int
+euclid a 0 = a
+euclid a b = gcd b (mod a b)
+
+-- 6: Definera:
+
+-- a) and :: [Bool] -> Bool
+
+and3 :: [Bool] -> Bool
+and3 [True]     = True
+and3 [False]    = False
+and3 (x:xs) | x == True = and3 xs
+            | otherwise = False
+
+-- b) concat :: [[a]] -> [a]
+
+concatDeez :: [[a]] -> [a]
+concatDeez []       = []
+concatDeez [[]]     = []
+concatDeez [[x]]    = [x]
+concatDeez (x:xs)   = x ++ concatDeez xs
+
+-- c) replicate :: Int -> a -> [a]
+
+replicateDeez :: Int -> a -> [a]
+replicateDeez 0 a       = []
+replicateDeez 1 a       = [a]
+replicateDeez n a       = [a] ++ replicateDeez (n - 1) a
+
+-- d) (!!) :: [a] -> Int -> a
+indexDeez :: [a] -> Int -> a
+indexDeez (x:xs) n = undefined
+
+
+-- e) elem :: Eq a => a -> [a] -> Bool
+
+elemDeez :: Eq a => a -> [a] -> Bool
+elemDeez _ []   = False
+elemDeez a (x:xs) | a == x      = True
+                  | a /= x      = elemDeez a xs
+                  | otherwise   = False
 
 
 
@@ -416,4 +543,45 @@ fac1 n = n * fac1 (n-1)
 
 
 
---------------------------- Kapitel 5 --------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------- Kapitel 5 --------------------------------------------------------------------------------------------------------------------------
